@@ -33,12 +33,24 @@ Arduino arduino;
 
 // INSERT CODE //
 
-int pinLED = 11;
-int pinPOT = 0;
-int potVal;
+
+int pinRAW = 0;
+int rawVal;
 float x = 0.0;
 float lastx = 0;
 float lasty = -height/2;
+
+float[] arr = {0,0,0,0,0};
+int index = 0;
+
+int THRESH = 170;
+
+float bpm = 0;
+
+boolean haveBeat = false;
+
+float lastBeatTime;
+float timeDifference;
 
 void setup() {
   size(1200,800);
@@ -53,39 +65,143 @@ void setup() {
   
   // INSERT CODE //
   
-  arduino.pinMode(pinLED,Arduino.OUTPUT);
-  arduino.pinMode(pinPOT,Arduino.INPUT);
+  arduino.pinMode(pinRAW,Arduino.INPUT);
   
-  arduino.digitalWrite(pinLED, Arduino.HIGH);
+  background(0,0,0);
   
-  background(255,127,127);
 }
 
 void draw() {
+  smooth();
+  strokeWeight(3);
+  stroke(0,255,0);
+  
+  //translate(width/2,3*height/4);
+  
   translate(0,height);
+  
+  for (int i=0; i<61; i++) {
+    float x = 0.025 * (-pow(i,2) + 40*i + 1200)*sin((PI*i)/180);
+    float y = -0.025 * (-pow(i,2) + 40*i + 1200)*cos((PI*i)/180);
+    
+    x += width - width/30;
+    
+    y += -height + height/16;
+    
+    point(x,y); // use these to place your little hearts
+    
+    x-=(2)*(width-width/30);
+    
+    point(-x,y); // use these to place your little hearts
+  }
+  
+  strokeWeight(1);
+  stroke(150);
+  
+  //line(0,-height/2,width,-height/2);
+  
+  fill(0,255,0);
+  textSize(32);
+  text("BPM",width - width/16,-height + height/10);
+  
   strokeWeight(2);
+  stroke(0,255,0);
   
-  potVal = arduino.analogRead(pinPOT);
+  rawVal = arduino.analogRead(pinRAW);
   
-  float mappedVal = map(potVal, 0,850,-1400,800+height);
-  println(mappedVal);
+  float mappedVal = map(rawVal, 0,850,-1400,800+height);
+  //println(mappedVal);
+   
+  arr[index] = mappedVal;
+  
+  int lastindex = index-1;
+  if (lastindex < 0)
+  {
+    lastindex = 4;
+  }
+  int lastlastindex = lastindex-1;
+  if (lastlastindex < 0)
+  {
+    lastlastindex = 4;
+  }
+  
+  //MIGHT NEED TO USE LASTLAST INDEX TOO
+  //if (arr[index] - arr[lastindex] < THRESH)
+  if ((lasty+mappedVal)*(lasty+mappedVal) > THRESH*THRESH)
+  {
+    //println("Hello");
+    if (haveBeat)
+    {
+      print("updating bpm: ");
+      timeDifference = millis() - lastBeatTime;
+      
+      timeDifference /= 1000;
+      timeDifference /= 60;
+      
+      bpm = 1/timeDifference;
+      println(bpm);
+      
+      lastBeatTime = millis();
+    }
+    else
+    { 
+      haveBeat = true;
+      lastBeatTime = millis();
+    }
+  }
+  
+  index++;
+  
+  if (index == 5)
+  {
+    index = 0;
+  }
   
   point(x,-mappedVal);
+  //point(x, -height/3);
   
   line(lastx,lasty,x,-mappedVal);
   
   lastx=x;
   lasty=-mappedVal;
   
+  int digits = 0;
+  int bpmCopy = round(bpm);
+  
+  do
+  {
+    bpmCopy /= 10;
+    digits++;
+  }while (bpmCopy != 0);
+  
+  //===================================
+  strokeWeight(1);
+  stroke(150);
+  fill(0,255,0);
+  textSize(70);
+  
+  if (digits == 3)
+  {
+    text(str(round(bpm)),width - width/8,-height + height/5);
+  }
+  else if (digits == 2)
+  {
+    text(str(round(bpm)),width - width/12,-height + height/5);
+  }
+  else if (digits <= 1)
+  {
+    text(str(round(bpm)),width - width/20,-height + height/5);
+  }
+  //====================================
+  
   x+=3;
   
   if (x >= width)
   {
-    background(255,127,127);
+    background(0,0,0);
     x = 0.0;
     lastx = 0.0;
   }
   
-  // INSERT CODE //
 
 }
