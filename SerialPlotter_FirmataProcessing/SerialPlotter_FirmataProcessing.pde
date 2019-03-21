@@ -41,9 +41,12 @@ float lastx = 0;
 float lasty = -height/2;
 
 float[] arr = {0,0,0,0,0};
+int[] arrOfIndexes = {0,1,2,3,4};
 int index = 0;
 
 int THRESH = 170;
+
+boolean isBeat = false;
 
 float bpm = 0;
 
@@ -51,6 +54,9 @@ boolean haveBeat = false;
 
 float lastBeatTime;
 float timeDifference;
+float runningTime;
+
+int count = 0;
 
 void setup() {
   size(1200,800);
@@ -69,6 +75,7 @@ void setup() {
   
   background(0,0,0);
   
+  runningTime = millis();
 }
 
 void draw() {
@@ -125,35 +132,62 @@ void draw() {
     lastlastindex = 4;
   }
   
-  //MIGHT NEED TO USE LASTLAST INDEX TOO
-  //if (arr[index] - arr[lastindex] < THRESH)
-  if ((lasty+mappedVal)*(lasty+mappedVal) > THRESH*THRESH)
+  print(arr[0]);
+  print(", ");
+  print(arr[1]);
+  print(", ");
+  print(arr[2]);
+  print(", ");
+  print(arr[3]);
+  print(", ");
+  println(arr[4]);
+  
+  index++;
+  
+  if (index == 5)
   {
-    //println("Hello");
+    isBeat = false;
+    //check for beat in last 5 readings
+    for (int i = 0; i < 5; i++)
+    {
+      for (int j = 0; j < 5; j++)
+      {
+        if (i == j)
+          continue;
+        else if (i < j && arr[j] - arr[i] > THRESH)
+        {
+          isBeat = true;
+        }
+        else if (i > j && arr[i] - arr[j] > THRESH)
+        {
+          isBeat = true;
+        } 
+      }
+    }
+    
     if (haveBeat)
     {
-      print("updating bpm: ");
-      timeDifference = millis() - lastBeatTime;
-      
-      timeDifference /= 1000;
-      timeDifference /= 60;
-      
-      bpm = 1/timeDifference;
-      println(bpm);
-      
-      lastBeatTime = millis();
+      if(isBeat)
+      {
+        print("updating bpm: ");
+        timeDifference = millis() - lastBeatTime;
+        
+        timeDifference /= 1000;
+        timeDifference /= 60;
+        
+        bpm = 1/timeDifference;
+        println(bpm);
+        
+        runningTime = millis();
+        lastBeatTime = millis();
+      }
     }
     else
     { 
       haveBeat = true;
       lastBeatTime = millis();
     }
-  }
-  
-  index++;
-  
-  if (index == 5)
-  {
+    
     index = 0;
   }
   
@@ -164,6 +198,12 @@ void draw() {
   
   lastx=x;
   lasty=-mappedVal;
+  
+  if (millis() - runningTime > 3500)
+  {
+    bpm = 0;
+    println(bpm);
+  }
   
   int digits = 0;
   int bpmCopy = round(bpm);
@@ -177,8 +217,15 @@ void draw() {
   //===================================
   strokeWeight(1);
   stroke(150);
-  fill(0,255,0);
+  //fill(0,255,0);
   textSize(70);
+  
+  stroke(0,0,0);
+  //add a rectangle (NOT COMPLETED IMPLEMENTATION YET)
+  fill(0,0,0);
+  rect(width-width/8, -height + height/8, width/8,80);
+  
+  fill(0,255,0);
   
   if (digits == 3)
   {
@@ -202,6 +249,4 @@ void draw() {
     x = 0.0;
     lastx = 0.0;
   }
-  
-
 }
